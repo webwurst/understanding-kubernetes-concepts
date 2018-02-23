@@ -62,7 +62,7 @@ Try to play around with them and then maybe move on to a [more advanced example]
 
 ## Using Deployments to Manage Your Services Declaratively {#deployments}
 
-As you might have heard (or read) me saying before, in the Kubernetes community it is sometimes hard to find the best way to do things. Furthermore, a lot of beginner tutorials let users run a list of `kubectl` commands to run and manage pods on Kubernetes. This, at least in parts, results in an imperative form of managing software. It involves various manual work/commands and can be pretty opaque if you work in a team. 
+As you might have heard (or read) me saying before, in the Kubernetes community it is sometimes hard to find the best way to do things. Furthermore, a lot of beginner tutorials let users run a list of `kubectl` commands to run and manage pods on Kubernetes. This, at least in parts, results in an imperative form of managing software. It involves manual work and can be pretty opaque if you work in a team. 
 
 <a data-flickr-embed="true"  href="https://www.flickr.com/photos/quinnanya/4873252184/in/photolist-8qCG6o-7vETFq-6bTRd7-drbPpz-3eFDqL-2Q7niP-6dgPhU-2ZdLZe-38UFxR-Br3qJV-zow44-2NqJ3K-aR8kPc-aR8jHR-aR8jp2-wy1x8-aR8f5X-6Gogt1-dZsPzj-aR8iLn-aR8eEz-9CehY2-aR8j5D-aR8hi2-aR8hLg-8b1E7c-8Tid8M-aR8k4i-aR8fXF-apkKvD-bVtSzM-aR8iba-aR8kq8-aR8fwx-2nVcip-fopepg-7h7DgM-71n1bz-25PEuq-dZn9dg-dZn9zx-dZn9q2-dZsQA7-dZsQ1d-dZsRaL-9RWZUv-zKvYt-26BQNz-CiGBTr-wxLTz" title="Use a declarative format"><img src="https://c1.staticflickr.com/5/4099/4873252184_5d74c87e90_b.jpg" width="1024" height="683" alt="Use a declarative format"></a><script async src="//embedr.flickr.com/assets/client-code.js" charset="utf-8"></script>
 
@@ -70,70 +70,48 @@ Mainly to make Pod management easier and more controlled, the declarative Deploy
 
 ### The Declarative vs. The Imperative Way
 
-My main argument for Deployments is a general one between the declarative and the imperative way of deploying and managing software. It applies not only on the application-level, but also on the infrastructure-level (but that's for another post to contemplate).
+My main argument for Deployments is a general one between the declarative and the imperative way of deploying and managing software. It applies not only on the application-level, but also on the infrastructure-level (but that's for another time to contemplate).
 
-While focusing on Deployments in this chapter, the declarative way of defining (and later editing) a manifest and applying it to your Kubernetes cluster is a general premise you should use for all resources managed by Kubernetes.
+While focusing on Deployments in this chapter, the declarative way of defining (and later editing) a manifest and applying it to your Kubernetes cluster is a general best-practice you should use for all resources managed by Kubernetes.
 
 #### The Imperative Way
 
 The imperative way is usually the one you use to try out things and get something working. You manually tweak it and at some point it is to your liking. However, if you keep on using this imperative style for deploying and managing your software you will encounter several problems (even if you automate the steps).
 
 - If you want to know what has been last deployed, you can only resort to checking the currently deployed version, which is not necessarily what was planned to be deployed.
-- If you change something manually, someone else might overwrite your changes or they might get reverted. For example because you only started new Pods manually and didn't change the replication controller.
+- If you change something manually, someone else might overwrite your changes or they might get reverted. For example because you only started new Pods manually and didn't change the controller.
 - Keeping track of how a service has developed over time is hard and needs to be documented somewhere separately. This is especially important when working in teams.
 - You need several commands to get one service to the desired state. Even if these steps get automated, they might lead to different outcomes when run in different environments.
 
 #### The Declarative Way
 
-The declarative way on the other hand, is what you should come up with once you go into actually deploying and managing your software in production or integrating with continuous delivery pipelines. You might have tried out stuff the imperative way before, but once you know how it should look like, you sit down and "make it official" by writing it into a declarative definition. This avoids the above-mentioned problems and even brings some added benefits.
+The declarative way on the other hand is what you should come up with, once you go into actually deploying and managing your software - especially when going towards production or integrating with continuous delivery pipelines. You might have tried out stuff the imperative way before, but once you know how it should look like, you sit down and "make it official" by writing it into a declarative definition. This avoids the above-mentioned problems and even brings some added benefits.
 
 - It makes you think and plan how you want things to look once they are running (plan the state).
 - It describes the way things should look like when running and not the steps that are needed to get there (define the desired state not the process).
-- Changes can be easily documented by keeping track of (or versioning) the declarative definition, which makes work and communication in teams easier (but is also a good/clean approach for single devs).
+- Changes can be easily documented by keeping track of (or versioning) the declarative definition, which makes work and communication in teams easier, but is also a good/clean approach for single devs.
 
 ### Deployments in Kubernetes
 
-As mentioned above the deployments resource is pretty new and still not widely-used. However, for now it is the best primitive we have for deploying and managing our software in Kubernetes, so it is important to understand what it does and what you can use it for.
+Deployments are the main primitive we have for deploying and managing our software in Kubernetes, so it is important to understand what they do and what you can use them for.
 
-Before deployments, there were replication controllers, which managed Pods and ensured a certain number of them were running. Now with deployments we move to replica sets, which are basically the next-generation of replication controllers. Only this time we don't manage them, but they get managed by the deployments we define. Thus, the chain is like following: Deployment -> ReplicaSet -> Pod(s). And we only have to take care of the first.
+Before Deployments, there were Replication Controllers, which managed Pods and ensured a certain number of them were running. With deployments we moved to ReplicaSets, which replaced Replication Controllers later on.
 
-Additional to what replication controllers (or [replica sets](https://blog.giantswarm.io/understanding-basic-kubernetes-concepts-i-introduction-to-Pods-labels-replicas/)) offer, deployments give you declarative control over the update strategy used for the deployment. This replaces the old `kubectl rolling-update` way of updating, but offers the same flexibility in terms of defining `maxSurge` and `maxUnavailable`, i.e. how many additional and how many unavailable Pods are allowed. Defining this in a deployment enables you to "spec once use many times", which helps even more when working in teams or managing a multitude of deployments.
+We don't usually manage ReplicaSets, but they get managed by the Deployments we define. Thus, the chain is like following: Deployment -> ReplicaSet -> Pod(s). And we only have to take care of the first.
+
+Additional to what ReplicaSets offer, Deployments give you declarative control over the update strategy used for the Pods. This replaces the old `kubectl rolling-update` way of updating, but offers the same flexibility in terms of defining `maxSurge` and `maxUnavailable`, i.e. how many additional and how many unavailable Pods are allowed. Defining this in a Deployment enables you to "spec once use many times", which helps even more when working in teams or managing a multitude of Deployments.
 
 Deployments manage your updates for you. They even go as far as to check whether or not a new revision that is being rolled out is working and stop the rollout in case it is not.
 
-You can additionally define a wait time (`minReadySeconds`) that a pod needs to be ready without any of its containers crashing before a pod is considered available, which again helps against "bad updates" and gives certain containers a bit more time to get ready for traffic.
+You can additionally define a wait time (`minReadySeconds`) that a Pod needs to be ready without any of its containers crashing before it is considered available, which again helps against "bad updates" and gives your containers a bit more time to get ready for traffic.
 
-You can further use the update/revision functionality of deployments to concurrently deploy multiple revisions of a deployment. This enables blue/green deployments or canary release strategies.
-
-Furthermore, deployments keep a history of their revisions, which is used in rollback situations, as well as an event log, which you can use to audit releases and changes to your deployment.
+Furthermore, Deployments keep a history of their revisions, which is used in rollback situations, as well as an event log, which you can use to audit releases and changes to your Deployment.
 
 ### Getting Started With Deployments
 
-Reading about all the cool stuff you can do with deployments, you might want to check it out yourself.
+Reading about all the cool stuff you can do with Deployments, you might want to check them out yourself.
 
-As deployments (and their replica sets) are a kind of successor to replication controllers, it is quite easy to change replication controllers that you already have to deployments. You only have to change:
-
-```yaml
-apiVersion: v1
-kind: ReplicationController
-```
-
-to
-
-```yaml
-apiVersion: extensions/v1beta1
-kind: Deployment
-```
-
-and add a line containing `matchLabels:` after the `selector:` line (before the actual selectors, do not forget to fix indentation), because the deployments resource supports [set-based label requirements](https://kubernetes.io/docs/user-guide/labels/#resources-that-support-set-based-requirements).
-
-This should give you a workable deployment. As deployments feature more functionality than their predecessor, there are additional fields that you have not defined, yet. Luckily, these fields get filled automatically on creation with defaults. 
-
-However, as we learned above this might result in different outcomes when deployed to different clusters. Sometimes this might be intended, but if not you could look at what you got when applying that deployment to your cluster with `kubectl edit deployment <deployment name>` and then copy (part of) that back into your manifest.
-
-The right way, however, would be actually learning the correct usage of deployments by reading up on it in the [official documentation on deployments](https://kubernetes.io/docs/user-guide/deployments/) and then writing a manifest that works well for you. (You can still start with "translating" your existing replication controller manifests). The [Kubernetes blog post from April](http://blog.kubernetes.io/2016/04/using-deployment-objects-with.html) is also a good read and shows the way updates and rollbacks work with a nice example.
-
-Have fun exploring deployments and look out for the next basic concepts post soon!
+You can learn the usage of Deployments by reading up on them in the [official documentation on Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) and then writing a manifest that works well for you. Try updating and rolling back your Deployment and play around with scaling it up and down.
 
 ## Services Give You Abstraction {#services}
 
@@ -143,9 +121,9 @@ By now you should have a basic understanding of some of the fundamental primitiv
 
 ### Enter Services
 
-As mentioned in the [first blog post](https://blog.giantswarm.io/understanding-basic-kubernetes-concepts-i-introduction-to-Pods-labels-replicas/) in this series, Pods are ephemeral and bound to get killed and started by replica sets (or replication controllers) dynamically. Thus, communicating with a pod or groups thereof calls for a concept that abstracts away the ephemeral pod.
+As mentioned in the first chapter, Pods are ephemeral and bound to get killed and (in case a controller, e.g. a Deployment, manages them) restarted dynamically. Thus, communicating with a Pod or groups thereof calls for a concept that abstracts away the ephemeral Pod.
 
-This is where services come in. They are a basic concept that is especially useful when working with microservice architectures as they decouple individual services from each other. For example service A accessing service B doesn't know what kind of and how many Pods are actually doing the work in B. The actual Pods and even their implementation could change completely.
+This is where Services come in. They are a basic concept that is especially useful when working with microservice architectures as they decouple individual services from each other. For example service A accessing service B doesn't know what kind of and how many Pods are actually doing the work in B. The actual Pods and even their implementation could change completely.
 
 ### How Services Work
 
