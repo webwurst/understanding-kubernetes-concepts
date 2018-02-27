@@ -115,7 +115,7 @@ You can learn the usage of Deployments by reading up on them in the [official do
 
 ## Services Give You Abstraction {#services}
 
-By now you should have a basic understanding of some of the fundamental primitives of Kubernetes. However, there are some concepts missing, still. One of the very central ones solves, especially when working with microservices, sets an abstraction layer on top of Pods (and other services) so you can communicate with them without having to track every single pod as it starts, dies, and gets rescheduled. It is a basic building block for service discovery in Kubernetes.
+By now you should have a basic understanding of some of the fundamental primitives of Kubernetes. However, there are some concepts missing, still. One of the very central ones, especially when working with microservices, sets an abstraction layer on top of Pods (and other services) so you can communicate with them without having to track every single Pod as it starts, dies, and gets rescheduled. It is a basic building block for service discovery in Kubernetes.
 
 <a data-flickr-embed="true"  href="https://www.flickr.com/photos/jeremybrooks/4164721895/in/photolist-7m2hHV-aajSs-jsXpJ-j4Ku9-j4Pnc-MqCWQ-j4PXG-j4xWN-jsXzN-j4GDj-j4yFX-j4Gjg-j4MDA-j4Rb8-j4EeS-jsYmZ-j4EKr-j4L77-hHZ5eu-j4Ev8-j4F1f-j4NLH-j4Pyw-j4Dth-j4GZg-j4zDg-j4CW2-j4DZk-j4BWF-4QBATu-j4KTF-j4BiB-j4G4Y-j4KGw-j4FeX-j4Nsk-j4Cf5-j4PLE-jsYzU-jsZwC-j4RGh-j4Fuj-RawF-Rax1-rphWGp-rFDBev-rpaurS-px4xot-nxqzNb-6NMqqk" title="Service"><img src="https://c8.staticflickr.com/3/2723/4164721895_2676f3891f_b.jpg" width="1024" height="683" alt="Service"></a><script async src="//embedr.flickr.com/assets/client-code.js" charset="utf-8"></script>
 
@@ -127,25 +127,23 @@ This is where Services come in. They are a basic concept that is especially usef
 
 ### How Services Work
 
-Services work by defining a logical set of Pods and a policy by which to access them. The selection of Pods is based on label selectors (which we talked about in the first blog post). In case you select multiple Pods, the service automatically takes care of load balancing and assigns them a single (virtual) service IP (which you can also set manually).
+Services work by defining a logical set of Pods and a policy by which to access them. The selection of Pods is based on Label Selectors (which we talked about in the first chapter). In case you select multiple Pods, the Service automatically takes care of simple load balancing and assigns them a single virtual Service IP (which you can also set manually).
 
-You can use the selector to choose a group of Pods and define a `targetPort` on which to access them. Further helping with abstraction, this `targetPort` can also refer to the name of a port, which gives you more freedom to implement the actual Pods behind the service. Even the port of each pod could be different as long as they carry the same name.
+You can use the Selector to choose a group of Pods and define a `targetPort` on which to access them. Further helping with abstraction, this `targetPort` can also refer to the name of a port, which gives you more freedom to implement the actual Pods behind the Service. Even the port of each Pod could be different as long as they carry the same name.
 
-Additionally, services can abstract away other kinds of backends that are not Kubernetes Pods. You can for example abstract away an external database cluster behind a service. This way you can for example use a simple local database for your development environment and a professionally managed database cluster in production without having to change the way that your other services talk to that database service.
+This comes in handy when you abstract away certain kinds of backends that differ between stages. You can for example abstract away a database behind a Service. This way you can then use a simple local database for your development environment and a professionally managed database cluster in production without having to change the way that your other services talk to that database service.
 
-You can use the same feature if some of your workloads are running outside of your Kubernetes cluster, i.e. either on another Kubernetes cluster (or [namespace](http://kubernetes.io/docs/user-guide/namespaces/)) or even completely outside of Kubernetes. Latter is especially interesting if you are just starting to migrate workloads.
+You can also use Services if some of your workloads are running outside of your Kubernetes cluster, i.e. either on another Kubernetes cluster (or [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)) or even completely outside of Kubernetes. Latter is especially interesting if you are just starting to migrate workloads.
 
 ### Talking To Services
 
-You can discover and talk to services in your cluster either via environment variables or via [DNS](https://github.com/kubernetes/kubernetes/tree/release-1.2/cluster/addons/dns). Latter is a cluster addon, which comes OOTB in most Kubernetes installs (including Giant Swarm).
+You can discover and talk to services in your cluster either via environment variables or via [DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/). Latter is a cluster addon, which comes OOTB in most Kubernetes installs.
 
-In case you want to use another type of service discovery and don't want the load balancing and single service IP provided by the service, there's an option to create a so-called "headless" services. You can use this if you are already using a service discovery or want to reduce coupling to the Kubernetes system.
+In case you want to use another type of service discovery and don't want the load balancing and single service IP provided by the Service, there's an option to create a so-called "headless" Services. You can use these if you are already using a service discovery or want to reduce coupling to the Kubernetes platform.
 
 ### Get Started
 
-Now that you know a bit more about the concept of services, you should read up on their usage in the [official documentation](http://kubernetes.io/docs/user-guide/services/). Then go ahead and build some [deployments](https://blog.giantswarm.io/understanding-basic-kubernetes-concepts-using-deployments-manage-services-declaratively/) that talk to each other over services.
-
-Tip: If you have a service and a deployment that go together, you should usually start the service first and then the deployment. You can even deploy them with a single command by including both manifests in a single YAML file. You only have to separate them by a line containing `---`. Kubernetes will then create them one after the other.
+Now that you know a bit more about the concept of Services, you should read up on their usage in the [official documentation](https://kubernetes.io/docs/concepts/services-networking/service/). Then go ahead and build some Deployments that talk to each other over Services.
 
 ## Secrets and ConfigMaps {#secrets-configmaps}
 
