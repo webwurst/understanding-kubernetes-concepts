@@ -147,11 +147,11 @@ Now that you know a bit more about the concept of Services, you should read up o
 
 ## Secrets and ConfigMaps {#secrets-configmaps}
 
-The third factor of the [12 factor app methodology](http://12factor.net/) is called [Config](http://12factor.net/config) and describes why you should store configuration in the environment. This is based on the fact that an application's configuration can change between environments (e.g. development, staging, production, etc.) and that you want your applications to be portable. Thus, you should store the config outside of the application itself.
+In the [12 factor app methodology](http://12factor.net/), the third factor is called [Config](http://12factor.net/config) and describes why you should store configuration in the environment instead of in your code. This is based on the fact that an application's configuration can change between environments (e.g. development, staging, production, etc.) and that you want your applications to be portable. Thus, you should store the config outside of the application itself.
 
-Now with Docker and containers this means we should try to keep configuration out of the container image. This is even more needed when working with sensitive information, such as passwords, keys, auth tokens, because we might not want them to be available in a registry, even if that registry might be private.
+Now with Docker and containers, this means we should try to keep configuration out of the container image. This is even more needed when working with sensitive information, such as passwords, keys, auth tokens, because we might not want them to be available in a registry, even if that registry is private.
 
-In Docker we would use [`--env` or `--env-file`](https://docs.docker.com/engine/reference/commandline/run/#/set-environment-variables-e-env-env-file) for this no matter if we are working with sensitive information or just plain configuration.
+In Docker we would used to use [`--env` or `--env-file`](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e-env-env-file) for both configuration and sensitive information. For latter, there's the [`docker secret` command](https://docs.docker.com/engine/reference/commandline/secret/) in newer versions of Docker.
 
 <a data-flickr-embed="true"  href="https://www.flickr.com/photos/phunk/238010631/in/photolist-n2Sgz-efvdh-8po2PX-Hv92E-aFa9NU-o62d2N-6DGxCg-dcmDEG-6dMKmA-po5LLm-3dSNnN-4SxYyB-5QNDcr-eY1YE-5iXnZx-67qhyv-5Rdz8E-pJZ6Xs-PoQSz-xn8Ff-8UcSNJ-pBqZgX-4saSBE-4P6X1y-4wBSm-4v27DF-7ybZz-5R9361-9u5zKb-chr4iL-6arBZ4-qKxdQK-s5wmLX-3ivDWs-wikMVv-5Qkbca-tALd6-bfXD7Z-nFB7Wm-bWADhh-61CBtm-4UB6tG-h8hoTu-pZoMTS-gSXFSR-5QNDck-eWteMp-dnkiNh-79h48k-bd6CRz" title="Secret"><img src="https://c8.staticflickr.com/1/51/238010631_22f31b8f1e_o.jpg" width="1145" height="576" alt="Secret"></a><script async src="//embedr.flickr.com/assets/client-code.js" charset="utf-8"></script>
 
@@ -159,17 +159,21 @@ In Kubernetes we have two separate primitives for these use cases. The first is 
 
 ### Secrets
 
-Secrets can (and should) be used for storing small amounts (less than 1MB each) of sensitive information like passwords, keys, tokens, etc. Kubernetes creates and uses some secrets automatically (e.g. for accessing the API from a pod), but you can also create your own easily.
+Secrets can (and should) be used for storing small amounts (less than 1MB each) of sensitive information like passwords, keys, tokens, etc.. Kubernetes creates and uses some secrets automatically (e.g. Service Account tokens for accessing the API from a Pod). You can also create your own easily.
 
-Using secrets is quite straightforward. You reference them in a pod and can then use them either as files from volumes or as environment variables in your pod. Keep in mind that each container in your pod that needs to access the secret needs to request it explicitly. There's no implicit sharing of secrets inside the pod.
+Using Secrets is quite straightforward. You reference them in a Pod and can then use them either as files at your specified mount points or as environment variables in your Pod. Keep in mind that each container in your Pod that needs to access the Secret needs to request it explicitly. There's no implicit sharing of Secrets inside the Pod. 
 
-There's also a special type of secret called `imagePullSecrets`. Using these you can pass a Docker (or other) container image registry login to the Kubelet, so it can pull a private image for your pod.
+There's also a special type of Secret called `imagePullSecrets`. Using these you can pass a Docker (or other) container image registry login to the kubelet, so it can pull a private image for your Pod.
 
-When updating secrets that are used by already running Pods you need to be careful, as running Pods won't automatically pull the updated secret. You need to explicitly update your Pods (for example using the rolling update functionality of deployments explained in the [second blog post](https://blog.giantswarm.io/understanding-basic-kubernetes-concepts-using-deployments-manage-services-declaratively/) in this series).
+When updating Secrets that are used by already running Pods you need to be careful, as running Pods won't automatically pull the updated Secret. You need to explicitly update your Pods (for example using the rolling update functionality of Deployments explained above or by restarting/recreating them).
 
-Further keep in mind that you create a secret in a specific [namespace](http://kubernetes.io/docs/user-guide/namespaces/) and only Pods in the same namespace can access the secret.
+Further keep in mind that a Secret is namespaced, i.e. lives in a specific [namespace](http://kubernetes.io/docs/user-guide/namespaces/), and only Pods in the same namespace can access that Secret.
 
-Secrets are kept in a tmpfs and only on nodes that run Pods that use those secrets. The tmpfs keeps secrets from coming to rest on the node. However, they are transmitted to and from the API server in plain text, thus, be sure to have SSL/TLS protected connections between user and API server, but also between API server and Kubelets (Giant Swarm clusters do come with both enabled by default). 
+#### A Note on the Security of Secrets
+
+Secrets are kept in tmpfs and only on nodes that run Pods that use those Secrets. The tmpfs keeps Secrets from coming to rest on the node. However, they are transmitted to and from the API server in plain text, thus, be sure to have SSL/TLS protected connections between user and API server, but also between API server and kubelets.
+
+To further increase security for secrets you can (and should) choose to [encrypt them at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) (in etcd). For another added layer of security, you should enable [Node Authorization](https://kubernetes.io/docs/admin/authorization/node/) in Kubernetes, so that a kubelet can only request Secrets of Pods pertaining to its node. This decreases the blast radius of a security breach on a node.
 
 ### ConfigMaps
 
@@ -183,13 +187,13 @@ This configuration data can then be used as:
 
 Good use cases for ConfigMaps are for example storing config files for tools like redis or prometheus. This way you can change the configuration of these without having to rebuild the container.
 
-A difference to the secrets concept is that ConfigMaps actually get updated without the need to restart the Pods that use them. However, depending on how you use the configs provided you might need to reload the configs, e.g. with an API call to prometheus to reload. 
+A difference to the Secrets concept is that ConfigMaps actually get updated without the need to restart the Pods that use them. However, depending on how you use the configs provided, you might need to reload the configs, e.g. with an API call to prometheus to reload. This is often done through a sidecar container in the same Pod watching for changes of the config file.
 
 ### Towards more portable containers
 
-Once, you're using Secrets and ConfigMaps, it's easy to differentiate between environments like dev, test, and prod. You can just use different secrets and configs to configure your containers for the respective environment.
+Once, you're using Secrets and ConfigMaps, it's easy to differentiate between environments like dev, test, and prod. You can just use different Secrets and ConfigMaps to configure your containers for the respective environment.
 
-These two concepts also make your containers more versatile in that they keep out some of the specifics and let different users deploy them in different ways. Thus, you can foster better re-use between teams or even outside of your organization.
+These two concepts also make your containers more versatile in that they keep out some of the specifities and let different users deploy them in different ways. Thus, you can foster better re-use between teams or even outside of your organization.
 
 Secrets (and in some use cases also ConfigMaps) are especially helpful when sharing with other teams and organizations or even more when sharing publicly. You can freely share your images (and manifests), maybe even keep them in a public repository, without having to worry about any company-specific or sensitive data being published.
 
