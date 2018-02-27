@@ -4,7 +4,7 @@ Date: 2018-02-23
 
 # Understanding Basic Kubernetes Concepts
 
-This guide will help you understand the basic Kubernetes concepts. It consists of 5 chapters. In the first one I [explain the concepts of Pods, Labels, and Replica Sets](#pods-labels-replicas). In the second chapter [we talk about Deployments](#deployments). The third chapter [explains the Services concept](#services) and in the forth we look at [Secrets and ConfigMaps](#secrets-configmaps). In the final chapter we talk about [Daemon Sets and Jobs](#daemonsets-jobs).
+This guide will help you understand the basic Kubernetes concepts. It consists of 5 chapters. In the first one I [explain the concepts of Pods, Labels, and ReplicaSets](#pods-labels-replicas). In the second chapter [we talk about Deployments](#deployments). The third chapter [explains the Services concept](#services) and in the forth we look at [Secrets and ConfigMaps](#secrets-configmaps). In the final chapter we talk about [DaemonSets and Jobs](#daemonsets-jobs).
 
 There's lots of introductions and tutorials out there that help you get started with Kubernetes. However, most of them focus on showing how the commands work and how to get stuff running. Don't get me wrong, trying out the commands is important, but to really get into working productively with Kubernetes you need to go deeper and understand the concepts and their functionalities so you can actually use them in the way they were intended. This is especially hard coming from vanilla Docker, as the concepts of Docker don't directly translate to Kubernetes - at least if you want to use Kubernetes the right way.
 
@@ -155,7 +155,7 @@ In Docker we would used to use [`--env` or `--env-file`](https://docs.docker.com
 
 <a data-flickr-embed="true"  href="https://www.flickr.com/photos/phunk/238010631/in/photolist-n2Sgz-efvdh-8po2PX-Hv92E-aFa9NU-o62d2N-6DGxCg-dcmDEG-6dMKmA-po5LLm-3dSNnN-4SxYyB-5QNDcr-eY1YE-5iXnZx-67qhyv-5Rdz8E-pJZ6Xs-PoQSz-xn8Ff-8UcSNJ-pBqZgX-4saSBE-4P6X1y-4wBSm-4v27DF-7ybZz-5R9361-9u5zKb-chr4iL-6arBZ4-qKxdQK-s5wmLX-3ivDWs-wikMVv-5Qkbca-tALd6-bfXD7Z-nFB7Wm-bWADhh-61CBtm-4UB6tG-h8hoTu-pZoMTS-gSXFSR-5QNDck-eWteMp-dnkiNh-79h48k-bd6CRz" title="Secret"><img src="https://c8.staticflickr.com/1/51/238010631_22f31b8f1e_o.jpg" width="1145" height="576" alt="Secret"></a><script async src="//embedr.flickr.com/assets/client-code.js" charset="utf-8"></script>
 
-In Kubernetes we have two separate primitives for these use cases. The first is _Secrets_, which as the name suggest is for storing sensitive information. The second one is _ConfigMaps_, which you can use for storing general configuration. The two are quite similar in usage and support a variety of use cases.
+In Kubernetes we have two separate primitives for these use cases. The first is Secrets, which as the name suggest is for storing sensitive information. The second one is ConfigMaps, which you can use for storing general configuration. The two are quite similar in usage and support a variety of use cases.
 
 ### Secrets
 
@@ -171,13 +171,13 @@ Further keep in mind that a Secret is namespaced, i.e. lives in a specific [name
 
 #### A Note on the Security of Secrets
 
-Secrets are kept in tmpfs and only on nodes that run Pods that use those Secrets. The tmpfs keeps Secrets from coming to rest on the node. However, they are transmitted to and from the API server in plain text, thus, be sure to have SSL/TLS protected connections between user and API server, but also between API server and kubelets.
+[Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) are kept in tmpfs and only on nodes that run Pods that use those Secrets. The tmpfs keeps Secrets from coming to rest on the node. However, they are transmitted to and from the API server in plain text, thus, be sure to have SSL/TLS protected connections between user and API server, but also between API server and kubelets.
 
 To further increase security for secrets you can (and should) choose to [encrypt them at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) (in etcd). For another added layer of security, you should enable [Node Authorization](https://kubernetes.io/docs/admin/authorization/node/) in Kubernetes, so that a kubelet can only request Secrets of Pods pertaining to its node. This decreases the blast radius of a security breach on a node.
 
 ### ConfigMaps
 
-ConfigMaps are similar to Secrets, only that they are designed to more conveniently support working with strings that do not contain sensitive information. They can be used to store individual properties in form of key-value pairs. However, the values can also be entire config files or JSON blobs to store more information.
+[ConfigMaps](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) are similar to Secrets, only that they are designed to more conveniently support working with strings that do not contain sensitive information. They can be used to store individual properties in form of key-value pairs. However, the values can also be entire config files or JSON blobs to store more information.
 
 This configuration data can then be used as:
 
@@ -197,61 +197,63 @@ These two concepts also make your containers more versatile in that they keep ou
 
 Secrets (and in some use cases also ConfigMaps) are especially helpful when sharing with other teams and organizations or even more when sharing publicly. You can freely share your images (and manifests), maybe even keep them in a public repository, without having to worry about any company-specific or sensitive data being published.
 
-## Daemon Sets and Jobs {#daemonsets-jobs}
+## DaemonSets and Jobs {#daemonsets-jobs}
 
-In previous posts we looked at the basics of how to run our applications as Pods in Kubernetes. There's two more ways to run Pods that are a bit more specialized. One is the _Daemon Set_ and the other is called _Jobs_.
+In the previous chapters we looked at the basics of how to run our applications as Pods in Kubernetes. There's two more ways to run Pods that are a bit more specialized. One is the DaemonSet and the other is called Jobs.
 
 <a data-flickr-embed="true"  href="https://www.flickr.com/photos/phunk/4677641470/in/photolist-88m8QS-4ybrt-nYu1-pJkzSk-Nx3pw-achGi9-pSNFuN-7Qorv7-achGGw-8YEhXH-M5jtK-3EPYmM-2w4G2-2D8hX-4xSbL-6mwAAd-4ydBo-8NFkjt-oLjeHP-2NBd5w-2NBgBf-2NwQmi-7b3Dzs-4xTHz-4ydB4-prEWZx-cy5E5Q-nzidTs-4xSas-6mwBTU-4ydBR-7BFCz-4ydBY-4ydAJ-4ydzG-nfVEwr-pvNoXt-4ydzX-4ydA3-4ydBH-4ybra-4xS9P-4xS7D-4ybrC-aCLAND-4ybri-4ybqS-4xSc3-7EQPnq-A45V8s" title="Demon"><img src="https://c7.staticflickr.com/5/4018/4677641470_368e3094c7_o.jpg" width="1413" height="864" alt="Demon"></a><script async src="//embedr.flickr.com/assets/client-code.js" charset="utf-8"></script>
 
-### Daemon Sets
+### DaemonSets
 
-A daemon set ensures that an instance of a specific pod is running on all (or a selection of) nodes in a cluster. It creates Pods on each added node and garbage collects Pods when nodes are removed from the cluster.
+A [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) ensures that an instance of a specific Pod is running on all (or a selection of) nodes in a cluster. It creates Pods on each added node and garbage collects Pods when nodes are removed from the cluster.
 
-As the name suggests you can use daemon sets for running daemons (and other tools) that need to run on all nodes of a cluster. These can be things like cluster storage daemons (e.g. Quobyte, glusterd, ceph, etc.), log collectors (e.g. fluentd or logstash), or monitoring daemons (e.g. Prometheus Node Exporter, collectd, New Relic agent, etc.)
+As the name suggests you can use DaemonSets for running daemons (and other tools) that need to run on all nodes of a cluster. These can be things like cluster storage daemons (e.g. Quobyte, glusterd, ceph, etc.), log collectors (e.g. fluentd or filebeat), or monitoring daemons (e.g. Prometheus Node Exporter, collectd, New Relic agent, etc.)
 
 The simplest use case is deploying a daemon to all nodes. However, you might want to split that up to multiple daemon sets for example if you have a cluster with nodes of varying hardware, which might need adaptation in the memory and/or cpu requests you might include for the daemon.
 
-In other cases you might want different logging, monitoring, or storage solutions on different nodes of your cluster. For these cases where you want to deploy the daemons only to a specific set of nodes instead of all, you can use a [node selector](https://github.com/kubernetes/kubernetes.github.io/tree/release-1.3/docs/user-guide/node-selection) to specify a subset of nodes for the daemon set. Note that for this to work you need to have labeled your nodes accordingly.
+In other cases you might want different logging, monitoring, or storage solutions on different nodes of your cluster. For these cases where you want to deploy the daemons only to a specific set of nodes instead of all, you can use a [nodeSelector](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector) to specify a subset of nodes for the DaemonSet. Note that for this to work you need to have labeled your nodes accordingly.
 
 There are four ways to communicate with your daemons:
 
 - Push: The Pods are configured to push data to a service, so they do not have clients that need to find them.
 - NodeIP and known port: The Pods use a `hostPort` and clients can access them via this port on each NodeIP (in the range of nodes they are deployed to).
-- DNS: The Pods can be reached through a [headless service](http://kubernetes.io/docs/user-guide/services/#headless-services) by either using the `endpoints` resource or getting multiple A records from DNS.
+- DNS: The Pods can be reached through a [headless service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services) by either using the `endpoints` resource or getting multiple A records from DNS.
 - Service: The Pods are reachable through a standard service. Clients can access a daemon on a random node using that service. Note that this option doesn't offer a way to reach a specific node.
 
-Currently, you cannot update a daemon set. The only way to semi-automatically update the Pods is to delete the daemon set with the `--cascade=false` option, so that the Pods will be left on the nodes. Then you create a new daemon set with the same pod selector, but the updated template. The new daemon set will recognize the old Pods, but not update them automatically. You will need to force the creation of Pods with the new template, by manually deleting the old Pods from the nodes.
+Since Kubernetes version 1.6 DeamonSets also support [rolling updates](https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/). However, the update strategy by default is set to `OnDelete` for backward-compatibility. Thus, you might need to change the strategy to `RollingUpdate` to enable this functionality.
 
 ### Jobs
 
-Unlike the typical pod that you use for long-running processes, jobs let you manage Pods that are supposed to terminate and not be restarted. A job creates one or more Pods and ensures a specified number of them terminate with success.
+Unlike the typical Pod that you use for long-running processes, [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/) let you manage Pods that are supposed to terminate and not be restarted. A Job creates one or more Pods and ensures a specified number of them terminate with success.
 
-You can use jobs for the typical batch-job (e.g. a backup of a database), but also for workers that need to work off a certain queue (e.g. image or video converters).
+You can use Jobs for the typical batch-job (e.g. a backup of a database), but also for workers that need to work off a certain queue (e.g. image or video converters).
 
-There are three kinds of jobs:
+There are three kinds of Jobs:
 
-- Non-parallel jobs
-- Parallel jobs with a fixed completion count
-- Parallel jobs with a work queue
+- Non-parallel Jobs
+- Parallel Jobs with a fixed completion count
+- Parallel Jobs with a work queue
 
-For non-parallel jobs usually only one pod gets started and the job is considered complete once the pod terminates successfully. If the pod fails another one gets started in its place.
+For non-parallel Jobs usually only one Pod gets started and the Job is considered complete once the Pod terminates successfully. If the Pod fails another one gets started in its place.
 
-For parallel jobs with a fixed completion count the job is complete when there is one successful pod for each value between 1 and the number of completions specified.
+For parallel Jobs with a fixed completion count the Job is complete when there is one successful Pod for each value between 1 and the number of completions specified.
 
-For parallel jobs with a work queue, you need to take care that no pod terminates with success unless the work queue is empty. That is even if the worker did its job it should only terminate successfully if it knows that all its peers are also done. Once a pod exits with success, then all other Pods should also be exited or in the process of exiting.
+For parallel Jobs with a work queue, you need to take care that no Pod terminates with success unless the work queue is empty. That is, even if the worker did its job it should only terminate successfully if it knows that all its peers are also done. Once a Pod exits with success, then all other Pods should also be exited or in the process of exiting.
 
-For parallel jobs you can define the requested parallelism. By default it is set to 1 (only a single pod at any time). If parallelism is set to 0, the job is basically paused until it is increased.
+For parallel Jobs you can define the requested parallelism. By default it is set to 1 (only a single Pod at any time). If parallelism is set to 0, the job is basically paused until it is increased.
 
-Keep in mind that parallel jobs are not designed to support use cases that need closely-communicating parallel processes like for example in scientific computations, but rather for working off a specific amount of work that can be parallelized.
+Keep in mind that parallel Jobs are not designed to support use cases that need closely-communicating parallel processes like for example in scientific computations, but rather for working off a specific amount of work that can be parallelized.
+
+#### CronJobs
+
+If you want a Job to be scheduled once or reapeatedly at a specific point in time you can use [CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/). CronJobs are similar to Jobs, with the addition of a schedule in Cron format.
 
 ### The End?
 
-This is the last post in this series of Kubernetes basics. However, this doesn't mean that having read all five blog posts makes you a Kubernetes master.
+While this guide should give you a good first understanding of the basic concepts and get you going with your cluster, this doesn't mean that having read this makes you a Kubernetes master.
 
-First, the primitives introduced, while maybe not limited to the most basic, do not cover the whole range of primitives available in Kubernetes. 
+First, this guide only explains the basic concepts and does not go into detail on all options and features each of these primitives hold. Kubernetes resources are often times very complex so it is good to start with just the basics, but you might need to go deeper with time and make use of more features to get your applications deployed.
 
-Second, there's new primitives coming with new releases, such as Pet Sets that just recently got introduced as an alpha resource in Kubernetes 1.3.
+Second, the primitives introduced do not cover the whole range of resources available in Kubernetes. There's many more and with new versions even new ones might get added. All resources are there for a reason and often times knowing about them makes your life easier in the long run, when having to manage more complex workloads.
 
-So most probably I will be writing about more primitives once I feel there's need for more or simpler explanations than what is available out there already.
-
-Furthermore, just reading these blog posts and maybe looking through the Kubernetes documentation gives you a good foundation. However, you need to actually go and try it out and find ways to use the primitives to run and manage actual applications to get proficient in their usage. And there's no excuse that you don't have a cluster at hand, just try it out on a [local environment](https://blog.giantswarm.io/getting-started-with-a-local-kubernetes-environment/).
+Furthermore, just reading this guide and maybe looking through the Kubernetes documentation and blog posts gives you a good foundation. However, you need to actually go and try it out and find ways to use the primitives to run and manage actual applications to get proficient in their usage. And there's no excuse that you don't have a cluster at hand, just try it out on a [local environement](https://kubernetes.io/docs/getting-started-guides/minikube/).
