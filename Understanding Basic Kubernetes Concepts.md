@@ -46,7 +46,7 @@ As mentioned above a pod by itself is ephemeral and won't be rescheduled if it g
 
 As indicated above the ReplicaSet ensures a specific number of replicas are running. By modifying the number of replicas in the set's definition you can scale your Pods up and down.
 
-You can include the definition of the pod directly in the definition of the ReplicaSet, so you can manage them together. However, the ReplicaSet will manage all Pods that match its selector. You should in most cases refrain from manually creating such Pods and also take care that there's not other resources creating similarly labeled Pods as the ReplicaSet will think it created those pds and start managing them.
+You can include the definition of the pod directly in the definition of the ReplicaSet, so you can manage them together. However, the ReplicaSet will manage all Pods that match its selector. You should in most cases refrain from manually creating such Pods and also take care that there's not other resources creating similarly labeled Pods as the ReplicaSet will think it created those pods and start managing them.
 
 However, there is a higher level concept called a Deployment, which in most cases manages replica sets for you. Therefore, you usually won't need to create or manipulate ReplicaSet objects directly. It's still important knowing about this concept as without it you won't understand the specific workings of how Kubernetes will help you run and manage your applications. I will explain Deployments and the many features they bring with them in the next chapter. For now suffice to say that they will manage your replica sets for you.
 
