@@ -24,7 +24,7 @@ In order to gain all this functionality a Pod is a single deployable unit. Each 
 
 Now, for the typical Docker user this concept is quite new. For some it might sound like going back from the isolated "one process per container" to "deploying your whole LAMP stack together". However, this is not the intended use case for Pods. The main motivation for the Pod concept is supporting co-located, co-managed helper containers next to the application container. These include things like: logging or monitoring agents, backup tooling, data change watchers, event publishers, proxies, etc.. If you are not sure what to use Pods for in the beginning, you can for now use them with single containers like you might be used to from Docker.
 
-The Pod is the most basic concept in Kubernetes. By itself, it is ephemeral and won't be rescheduled to a new node once it dies. If we want to keep one or more instances of a Pod alive we need another concept: ReplicaSets. But before that we need to understand what Labels and Selectors are.
+The Pod is the most basic concept in Kubernetes. By itself, it is ephemeral and won't be rescheduled to a new node once it dies. If we always want to have one or more instances of a Pod alive we need another concept: ReplicaSets. But before that we need to understand what Labels and Selectors are.
 
 ### Labels & Selectors
 
